@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Georgian Space
 
-## Getting Started
+A place to learn Georgian: handwriting practice with automatic letter matching,
+a course of short lessons, matching cards with spaced repetition, and a numbers
+page that explains the base-20 counting system.
 
-First, run the development server:
+Next.js 16 (App Router) · Tailwind CSS 4 · shadcn/ui · zustand + IndexedDB ·
+vitest.
+
+## Running it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm test         # unit tests (scoring, SRS, numerals)
+npm run lint
+npx tsc --noEmit
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+There is no backend. Progress (letter mastery, review queue, streak, lesson
+results) is stored in the browser through IndexedDB, so clearing site data
+resets everything.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## The pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` — where you left off, streak, letters mastered, units.
+- `/course` — 9 units of short lessons: notes, flashcards, multiple choice,
+  listening, matching, fill-the-gap, unscramble, typing and handwriting steps.
+- `/write` — the handwriting studio: four guide lines, one letter at a time.
+- `/practice` — pairing rounds (Georgian ↔ meaning) and the review queue.
+- `/numbers` — every number 1–100 with its breakdown.
+- `/alphabet` — all 33 letters with names, sounds and example words.
 
-## Learn More
+## How handwriting scoring works
 
-To learn more about Next.js, take a look at the following resources:
+Everything happens in the browser, on canvas pixels — no model, no server.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Guides.** The canvas has four lines at fixed fractions of its height
+   (`GUIDE_FRACTIONS` in `src/lib/handwriting/types.ts`). The x-height band,
+   between midline and baseline, is the reference size.
+2. **Reference glyph.** The letter is drawn to an offscreen canvas at a font size
+   derived from the measured x-height of the webfont, sitting on the baseline,
+   and thresholded into a binary mask (`raster.ts`). Its ascent and descent come
+   from `measureText`, which is what classifies the letter as midline, ascender,
+   descender or full — the four-line hint can never disagree with the glyph.
+3. **Your ink.** Strokes are smoothed through midpoint quadratic curves and
+   rasterized at a fixed pen width, so a thick or thin drawing scores the same
+   (`strokes.ts`).
+4. **Distance transform.** A two-pass chamfer transform gives, for every pixel,
+   the distance to the nearest reference pixel and vice versa (`distance.ts`).
+5. **Score.** `score.ts` combines *coverage* (how much of the letter you drew)
+   and *precision* (how much of your ink lands on the letter, tolerant within a
+   few pixels) as a harmonic mean, then subtracts penalties for sitting in the
+   wrong band, drifting sideways or flooding the canvas with ink. 70 or more
+   counts as a match; a letter is mastered at 75.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The overlay button shows what the score saw: red where the letter was missed,
+amber where ink strayed outside it.
 
-## Deploy on Vercel
+## Sound
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Every Georgian string in the app can be heard: tap a letter, a word, a table
+row, a match tile or a card. Very few systems ship a `ka-GE` voice, so when one
+is missing the romanization is read by the closest available voice (Italian,
+then Spanish, Portuguese, Russian) instead of going silent. Listening exercises
+say so explicitly. Install a Georgian voice for the real pronunciation.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Numbers
+
+`src/lib/data/numbers.ts` composes the numerals rather than listing them, which
+is also what produces the explanation shown on the cards:
+
+- 1–19 are whole words; the teens are the unit plus `-მეტი` ("more than ten").
+- Above twenty the system is vigesimal: a stem for the twenties
+  (`ოც-`, `ორმოც-`, `სამოც-`, `ოთხმოც-`), then `და` ("and"), then a 1–19 word.
+  So 47 is `ორმოცდაშვიდი` — two twenties and seven.
+- Round twenties take `-ი`: `ოცი`, `ორმოცი`, `სამოცი`, `ოთხმოცი`. 100 is `ასი`.
+
+## Spaced repetition
+
+`src/lib/srs/scheduler.ts` is a compact SM-2: four grades (again / hard / good /
+easy), an ease factor and a growing interval. Letters are graded from their
+handwriting score, words from how they went in lessons and matching rounds, and
+both share one queue.

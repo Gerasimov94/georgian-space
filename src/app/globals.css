@@ -1,26 +1,194 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  --font-heading: var(--font-lora);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+  Ivory paper, ink-dark text and one accent — a muted teal — used for every
+  active, selected and interactive state. Green/red/amber are reserved for
+  answer feedback so the accent never means "correct".
+*/
+:root {
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.25 0.014 65);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.014 65);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.014 65);
+  --primary: oklch(0.53 0.088 197);
+  --primary-foreground: oklch(0.99 0.004 85);
+  --secondary: oklch(0.96 0.008 85);
+  --secondary-foreground: oklch(0.32 0.014 65);
+  --muted: oklch(0.955 0.008 85);
+  --muted-foreground: oklch(0.51 0.014 70);
+  --accent: oklch(0.935 0.036 197);
+  --accent-foreground: oklch(0.36 0.07 200);
+  --destructive: oklch(0.55 0.15 22);
+  --ink: oklch(0.29 0.016 65);
+  --border: oklch(0.895 0.01 80);
+  --input: oklch(0.895 0.01 80);
+  --ring: oklch(0.53 0.088 197 / 40%);
+  --radius: 0.625rem;
+
+  --success: oklch(0.5 0.1 158);
+  --success-soft: oklch(0.955 0.032 158);
+  --success-border: oklch(0.83 0.07 158);
+  --danger: oklch(0.53 0.15 22);
+  --danger-soft: oklch(0.96 0.028 22);
+  --danger-border: oklch(0.85 0.07 22);
+  --warning: oklch(0.56 0.1 75);
+  --warning-soft: oklch(0.96 0.035 75);
+  --warning-border: oklch(0.85 0.07 75);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Barely-there warm wash so large white cards still read as paper. */
+    background-image: radial-gradient(
+      120% 90% at 50% 0%,
+      oklch(0.97 0.014 90) 0%,
+      transparent 60%
+    );
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Small-caps section label used above panels. */
+@utility label-caps {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@utility font-georgian {
+  font-family: var(--font-noto-georgian), system-ui, sans-serif;
+}
+
+/* Georgian display text: slightly tighter, ink coloured. */
+@utility glyph {
+  font-family: var(--font-noto-georgian), system-ui, sans-serif;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+/*
+  One interactive surface for everything you can tap: letters, answer options,
+  match tiles, keyboard keys. `tile-*` modifiers carry the state so selection
+  looks identical across the app.
+*/
+@utility tile {
+  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  box-shadow: 0 1px 2px oklch(0.25 0.014 65 / 6%);
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) {
+    border-color: color-mix(in oklab, var(--primary) 50%, var(--border));
+    background-color: color-mix(in oklab, var(--accent) 45%, var(--card));
+  }
+
+  &:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 3px var(--ring);
+    border-color: var(--primary);
+  }
+}
+
+@utility tile-selected {
+  border-color: var(--primary);
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+@utility tile-correct {
+  border-color: var(--success-border);
+  background-color: var(--success-soft);
+  color: var(--success);
+}
+
+@utility tile-wrong {
+  border-color: var(--danger-border);
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+.drawing-surface {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
